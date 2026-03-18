@@ -1,6 +1,6 @@
 # ButterRobot
 
-**v0.3.2 — March 18, 2026**
+**v0.3.3 — March 18, 2026**
 
 > What is my purpose? To read your calendar, review your GitLab MRs, and tell you what's flying over your house.   
 > And to pass the butter.

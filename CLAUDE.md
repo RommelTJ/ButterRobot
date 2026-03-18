@@ -22,12 +22,16 @@ This is a uv-managed Python project.
 | Tool | Purpose |
 |------|---------|
 | **FastAPI** | Web framework for the ButterRobot server |
+| **uvicorn** | ASGI server (invoked directly for SSL support) |
+| **websockets** | WebSocket proxy to OpenClaw Gateway |
+| **OpenClaw** | AI agent runtime (Gateway on miniPC at `:18789`) |
 | **Pydantic** | Data validation and serialization |
 | **uv** | Package and project management (`pyproject.toml`) |
 | **pytest** + **pytest-cov** | Testing and coverage |
 | **ruff** | Linting and formatting |
 | **ty** | Static type checking (Astral) |
-| **Docker + docker-compose** | Container build and deployment, port 8585 |
+| **Docker + docker-compose** | Container build and deployment, port 8585 (HTTPS) |
+| **mkcert** | Local TLS cert for HTTPS on LAN (cert at `~/.certs/` on miniPC) |
 
 ## Common Commands
 
@@ -51,7 +55,7 @@ uv run task typecheck
 ## Conventions
 
 - All endpoints must have return type annotations.
-- Tests live in `tests/` and use `fastapi.testclient.TestClient`.
+- Tests are colocated with source in `app/` and use `fastapi.testclient.TestClient`.
 - Do not use `pyright` — this project uses `ty` for type checking.
 - Do not include ticket numbers in code comments.
 - Keep responses and briefings concise — the user may be on a bike trainer.
