@@ -68,6 +68,8 @@ async def websocket_proxy(websocket: WebSocket, path: str) -> None:
     extra_headers = {}
     if auth := websocket.headers.get("authorization"):
         extra_headers["authorization"] = auth
+    if origin := websocket.headers.get("origin"):
+        extra_headers["origin"] = origin
 
     try:
         async with websockets.connect(target, additional_headers=extra_headers) as upstream:
