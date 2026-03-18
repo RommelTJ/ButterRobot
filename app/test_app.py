@@ -5,7 +5,7 @@ from app.app import app
 client = TestClient(app)
 
 
-def test_hello() -> None:
-    response = client.get("/")
+def test_health() -> None:
+    response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == "Hello from ButterRobot!"
