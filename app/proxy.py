@@ -2,12 +2,20 @@ import asyncio
 import os
 from typing import Any
 
+import httpx
 import websockets
 import websockets.exceptions
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, Request, Response, WebSocket
 from starlette.websockets import WebSocketDisconnect, WebSocketState
 
 OPENCLAW_WS_URL = os.getenv("OPENCLAW_WS_URL", "ws://127.0.0.1:18789")
+OPENCLAW_HTTP_URL = os.getenv("OPENCLAW_HTTP_URL", "http://127.0.0.1:18789")
+
+_HOP_BY_HOP = frozenset({
+    "connection", "keep-alive", "transfer-encoding", "te",
+    "trailers", "upgrade", "proxy-authorization", "proxy-authenticate",
+    "content-encoding", "content-length",
+})
 
 router = APIRouter()
 
@@ -49,7 +57,7 @@ async def _bridge(client: WebSocket, upstream: Any) -> None:
 
 
 @router.websocket("/{path:path}")
-async def openclaw_proxy(websocket: WebSocket, path: str) -> None:
+async def websocket_proxy(websocket: WebSocket, path: str) -> None:
     await websocket.accept()
 
     target = f"{OPENCLAW_WS_URL}/{path}"
@@ -69,3 +77,35 @@ async def openclaw_proxy(websocket: WebSocket, path: str) -> None:
     finally:
         if websocket.client_state == WebSocketState.CONNECTED:
             await websocket.close()
+
+
+@router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"])
+async def http_proxy(request: Request, path: str) -> Response:
+    target = f"{OPENCLAW_HTTP_URL}/{path}"
+    if request.url.query:
+        target += f"?{request.url.query}"
+
+    headers = {
+        k: v for k, v in request.headers.items()
+        if k.lower() not in _HOP_BY_HOP and k.lower() != "host"
+    }
+
+    async with httpx.AsyncClient() as client:
+        upstream = await client.request(
+            method=request.method,
+            url=target,
+            headers=headers,
+            content=await request.body(),
+            follow_redirects=False,
+        )
+
+    response_headers = {
+        k: v for k, v in upstream.headers.items()
+        if k.lower() not in _HOP_BY_HOP
+    }
+
+    return Response(
+        content=upstream.content,
+        status_code=upstream.status_code,
+        headers=response_headers,
+    )
