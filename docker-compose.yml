@@ -3,3 +3,5 @@ services:
     build: .
     network_mode: host
     restart: unless-stopped
+    volumes:
+      - /home/rommel/.certs:/certs:ro

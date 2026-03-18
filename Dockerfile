@@ -5,4 +5,4 @@ COPY pyproject.toml .
 RUN uv sync --no-dev
 COPY app/ ./app/
 EXPOSE 8585
-CMD ["uv", "run", "fastapi", "run", "app/app.py", "--port", "8585", "--host", "0.0.0.0"]
+CMD ["uv", "run", "fastapi", "run", "app/app.py", "--port", "8585", "--host", "0.0.0.0", "--ssl-keyfile", "/certs/key.pem", "--ssl-certfile", "/certs/cert.pem"]
