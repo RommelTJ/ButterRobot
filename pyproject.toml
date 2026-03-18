@@ -28,6 +28,7 @@ pythonpath = ["."]
 
 [tool.coverage.run]
 source = ["app"]
+omit = ["app/test_*.py"]
 
 [tool.ruff]
 target-version = "py311"
