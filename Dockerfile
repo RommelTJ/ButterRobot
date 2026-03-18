@@ -1,0 +1,8 @@
+FROM python:3.13-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+WORKDIR /app
+COPY pyproject.toml .
+RUN uv sync --no-dev
+COPY app/ ./app/
+EXPOSE 8585
+CMD ["uv", "run", "fastapi", "run", "app/app.py", "--port", "8585", "--host", "0.0.0.0"]

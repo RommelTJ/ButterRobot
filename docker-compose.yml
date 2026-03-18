@@ -1,0 +1,5 @@
+services:
+  butterrobot:
+    build: .
+    ports:
+      - "8585:8585"
