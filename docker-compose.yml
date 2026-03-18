@@ -4,3 +4,8 @@ services:
     ports:
       - "8585:8585"
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - OPENCLAW_WS_URL=ws://host.docker.internal:18789
+      - OPENCLAW_HTTP_URL=http://host.docker.internal:18789
