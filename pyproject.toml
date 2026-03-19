@@ -5,6 +5,8 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi[standard]",
     "websockets>=14",
+    "icalendar>=6.1",
+    "recurring-ical-events>=3.5",
 ]
 
 [dependency-groups]
