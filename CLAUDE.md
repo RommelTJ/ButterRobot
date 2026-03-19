@@ -84,6 +84,39 @@ uv run task typecheck
 - **Talk Mode** (mic icon in macOS app): tap once to start a session → speak naturally → agent responds → ElevenLabs TTS plays through speakers automatically
 - Talk Mode is the voice interaction method — wake word was abandoned
 
+## Adding OpenClaw Skills
+
+Skills are **Markdown files, not code**. They teach the OpenClaw agent what exec tool commands to run. No Python, no new dependencies.
+
+### Process
+
+1. **Create the skill** at `workspace/skills/<name>/SKILL.md` with YAML frontmatter:
+   ```yaml
+   ---
+   name: <skill-name>
+   description: One-line description of what the skill does.
+   metadata: {"openclaw":{"requires":{"env":["ENV_VAR_1","ENV_VAR_2"]}}}
+   ---
+   ```
+2. **Add a reference** in `workspace/TOOLS.md` pointing to the skill
+3. **Set env vars** on the miniPC — add `Environment=` lines to the systemd unit:
+   ```
+   ~/.config/systemd/user/openclaw-gateway.service
+   ```
+   Then reload and restart:
+   ```bash
+   systemctl --user daemon-reload
+   systemctl --user restart openclaw-gateway.service
+   ```
+4. **Pull on the miniPC** — the workspace is symlinked (`~/.openclaw/workspace -> ~/ButterRobot/workspace`), so `git pull` is enough
+5. **Test via WebChat** at `https://homelab.homelab.com:8585`
+
+### Notes
+
+- `openclaw skills list` checks the CLI's shell env, not the gateway's. A skill may show `✗ missing` in the CLI but work fine at runtime. Verify with: `cat /proc/$(systemctl --user show openclaw-gateway.service -p MainPID --value)/environ | tr '\0' '\n' | grep <VAR>`
+- Project IDs and team members live in the gitlab skill as a reference — update them there when the team changes
+- Credentials from Rommel's git remotes on the MacBook (under `~/code/work/chatmeter/`) can be used to find API tokens
+
 ## Conventions
 
 - All endpoints must have return type annotations.
