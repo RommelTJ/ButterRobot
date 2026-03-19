@@ -183,10 +183,10 @@ class TestAircraftFilter:
         result = self.filter.is_interesting(ac)
         assert result is True
 
-    def test_routine_commercial_not_interesting(self):
+    def test_routine_commercial_within_range_is_interesting(self):
         ac = self._make_aircraft(category="A3", flight="SWA1234 ", baro_rate=-500)
         result = self.filter.is_interesting(ac)
-        assert result is False
+        assert result is True
 
     def test_aircraft_without_position_not_interesting(self):
         ac = self._make_aircraft()
@@ -217,9 +217,11 @@ class TestAircraftFilter:
         assert result is True
 
     def test_filter_list(self):
-        interesting = self._make_aircraft(hex="ae1234", flight="EVAC1   ")
-        boring = self._make_aircraft(hex="a99999", category="A3", flight="SWA999  ")
-        result = self.filter.filter_interesting([interesting, boring])
+        in_range = self._make_aircraft(hex="ae1234", flight="EVAC1   ")
+        out_of_range = self._make_aircraft(
+            hex="a99999", category="A3", flight="SWA999  ", lat=32.7 + 10 / 60
+        )
+        result = self.filter.filter_interesting([in_range, out_of_range])
         assert len(result) == 1
         assert result[0]["hex"] == "ae1234"
 

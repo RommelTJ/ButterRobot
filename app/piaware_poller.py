@@ -136,31 +136,14 @@ class AircraftFilter:
         if alt is not None and alt > self.altitude_max:
             return False
 
-        # Military aircraft within range
-        if is_military(aircraft) and distance <= self.radius_nm:
+        # Any aircraft within range and below altitude ceiling
+        if distance <= self.radius_nm:
             return True
 
         # Helicopter / rotorcraft at low altitude nearby (wider 5nm radius)
         category = aircraft.get("category", "")
         if category == "A7" and distance <= max(self.radius_nm, 5.0):
             return True
-
-        # Heavy aircraft on approach
-        if category == "A5" and distance <= self.radius_nm:
-            callsign = aircraft.get("flight", "").strip().upper()
-            # Only interesting if not routine commercial
-            is_commercial = any(
-                callsign.startswith(p) for p in COMMERCIAL_PREFIXES
-            )
-            if not is_commercial:
-                return True
-            # Commercial heavy on approach to SAN is still notable
-            baro_rate = aircraft.get("baro_rate", 0)
-            nav_modes = aircraft.get("nav_modes", [])
-            if baro_rate is not None and baro_rate < 0:
-                return True
-            if isinstance(nav_modes, list) and "approach" in nav_modes:
-                return True
 
         return False
 
