@@ -203,7 +203,7 @@ class PiawarePoller:
                 data = json.loads(response.read())
                 return data.get("aircraft", [])
         except Exception:
-            logger.warning("Failed to fetch feed from %s", url, exc_info=True)
+            logger.debug("Failed to fetch feed from %s", url, exc_info=True)
             return []
 
     def merge_feeds(
