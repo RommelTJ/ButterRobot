@@ -51,6 +51,8 @@ COMMERCIAL_PREFIXES = (
     "UPS",
 )
 INTERESTING_CATEGORIES = {"A5", "A7", "B2"}
+VALID_ALERT_TYPES = {"military", "helicopter", "heavy", "all"}
+DEFAULT_ALERT_TYPES = frozenset({"military", "helicopter", "heavy"})
 
 COMPASS_DIRECTIONS = [
     "north",
@@ -111,11 +113,13 @@ class AircraftFilter:
         home_lon: float,
         radius_nm: float = 2.0,
         altitude_max: int = 5000,
+        alert_types: frozenset[str] = DEFAULT_ALERT_TYPES,
     ):
         self.home_lat = home_lat
         self.home_lon = home_lon
         self.radius_nm = radius_nm
         self.altitude_max = altitude_max
+        self.alert_types = alert_types
 
     def is_interesting(self, aircraft: dict) -> bool:
         """Determine if an aircraft is interesting enough to announce."""
@@ -136,14 +140,38 @@ class AircraftFilter:
         if alt is not None and alt > self.altitude_max:
             return False
 
-        # Any aircraft within range and below altitude ceiling
-        if distance <= self.radius_nm:
+        # "all" mode: any aircraft within range
+        if "all" in self.alert_types and distance <= self.radius_nm:
             return True
 
-        # Helicopter / rotorcraft at low altitude nearby (wider 5nm radius)
+        # Military aircraft within range
+        if "military" in self.alert_types:
+            if is_military(aircraft) and distance <= self.radius_nm:
+                return True
+
         category = aircraft.get("category", "")
-        if category == "A7" and distance <= max(self.radius_nm, 5.0):
-            return True
+
+        # Helicopter / rotorcraft nearby (wider 5nm radius)
+        if "helicopter" in self.alert_types:
+            if category == "A7" and distance <= max(self.radius_nm, 5.0):
+                return True
+
+        # Heavy aircraft on approach
+        if "heavy" in self.alert_types:
+            if category == "A5" and distance <= self.radius_nm:
+                callsign = aircraft.get("flight", "").strip().upper()
+                is_commercial = any(
+                    callsign.startswith(p) for p in COMMERCIAL_PREFIXES
+                )
+                if not is_commercial:
+                    return True
+                # Commercial heavy only if on approach (descending or approach mode)
+                baro_rate = aircraft.get("baro_rate", 0)
+                nav_modes = aircraft.get("nav_modes", [])
+                if baro_rate is not None and baro_rate < 0:
+                    return True
+                if isinstance(nav_modes, list) and "approach" in nav_modes:
+                    return True
 
         return False
 
@@ -165,12 +193,14 @@ class PiawarePoller:
         url_1090: str,
         url_978: str,
         state_dir: Path,
+        alert_types: frozenset[str] = DEFAULT_ALERT_TYPES,
     ):
         self.filter = AircraftFilter(
             home_lat=home_lat,
             home_lon=home_lon,
             radius_nm=radius_nm,
             altitude_max=altitude_max,
+            alert_types=alert_types,
         )
         self.poll_interval = poll_interval
         self.url_1090 = url_1090
@@ -432,6 +462,15 @@ def main() -> None:
         os.environ.get("PIAWARE_STATE_DIR", "workspace/state")
     )
 
+    # Parse alert types from comma-separated env var
+    alert_types_raw = os.environ.get("PIAWARE_ALERT_TYPES", "")
+    if alert_types_raw.strip():
+        alert_types = frozenset(
+            t.strip().lower() for t in alert_types_raw.split(",") if t.strip()
+        )
+    else:
+        alert_types = DEFAULT_ALERT_TYPES
+
     poller = PiawarePoller(
         home_lat=home_lat,
         home_lon=home_lon,
@@ -441,15 +480,17 @@ def main() -> None:
         url_1090=url_1090,
         url_978=url_978,
         state_dir=state_dir,
+        alert_types=alert_types,
     )
 
     logger.info(
         "PiAware poller started — home=(%.4f, %.4f), radius=%.1f NM, "
-        "altitude_max=%d ft, poll every %ds",
+        "altitude_max=%d ft, alert_types=%s, poll every %ds",
         home_lat,
         home_lon,
         radius_nm,
         altitude_max,
+        sorted(alert_types),
         poll_interval,
     )
 
