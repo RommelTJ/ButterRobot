@@ -30,6 +30,46 @@ GitLab API requires URL-encoded project paths. Encode `/` as `%2F`:
 
 When you know the numeric project ID, use that instead — no encoding needed.
 
+## Project IDs
+
+All projects live under the `chatmeter` namespace on GitLab. Use numeric IDs in API calls.
+
+| Project                  | ID       |
+|--------------------------|----------|
+| monorepo (aka chatmeter) | 39261945 |
+| prompty                  | 47185722 |
+| jukebox                  | 38790169 |
+| etl                      | 38609162 |
+| astronaut                | 46336910 |
+| chatmeter-skills         | 77300207 |
+| deploy-utility           | 38969702 |
+| pw-integration-tests     | 59833987 |
+| data-science2            | 38609878 |
+| survey-renderer          | 43828360 |
+| nightcrawler             | 38895345 |
+| heisenberg               | 72549558 |
+| mongo-administration     | 38787444 |
+| engineering              | 38609000 |
+| custom-reports           | 68790918 |
+| lurch                    | 38609149 |
+| argonaut                 | 38917455 |
+| api-docs                 | 38609519 |
+| css-inliner              | 38609475 |
+| instant-audit-client     | 38609441 |
+| webhookup                | 38709539 |
+| integration-tests        | 38969349 |
+
+## Team Members
+
+Rommel's direct reports. Prioritize these when listing MRs, but do not filter out other authors.
+
+| Name     | GitLab Username |
+|----------|-----------------|
+| Adam     | agallagher1     |
+| Fele     | fcrear          |
+| Mitchell | mszeto          |
+| Rommel   | rommel-rico     |
+
 ## Fetch Open MRs
 
 List all open merge requests visible to the token:
