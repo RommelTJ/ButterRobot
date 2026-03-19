@@ -17,18 +17,33 @@ Skills define _how_ tools work. This file is for your specifics — the stuff th
 - Proactive alerts: Python poller script filters locally, invokes agent only for interesting aircraft
 - Focus mode: `workspace/state/piaware-focus.json` — toggle via voice ("focus mode on/off")
 
+## Calendar
+
+- Skill: see `skills/calendar/SKILL.md` for calendar event queries
+- Helper script: `app/calendar_helper.py` — fetches published ICS feed, filters by date, outputs JSON
+- No OAuth — uses a published ICS URL from Outlook (contains a secret token, never commit)
+- Env var: `CALENDAR_ICS_URL` (set in gateway systemd env)
+- Runs on miniPC via exec tool: `uv run python -m app.calendar_helper [--date YYYY-MM-DD]`
+
+## Manager CLI
+
+- Skill: see `skills/manager/SKILL.md` for natural language → manager CLI mapping
+- CLI location: `~/code/work/chatmeter/manager/` on the MacBook
+- Read-only commands only — no writes through the agent
+- Runs on MacBook via `node.invoke → system.run`
+
 ## Execution routing
 
-| Task                        | Runs on | Mechanism                    |
-|-----------------------------|---------|------------------------------|
-| GitLab API calls            | miniPC  | exec tool (curl / glab)      |
-| PiAware polling             | miniPC  | exec tool (curl to dump1090) |
-| Calendar queries            | miniPC  | exec tool (gcalcli or API)   |
-| Cron jobs                   | miniPC  | Gateway cron scheduler       |
-| IntelliJ focus / open files | MacBook | node.invoke → system.run     |
-| Local git operations        | MacBook | node.invoke → system.run     |
-| Manager CLI                 | MacBook | node.invoke → system.run     |
-| Run local test suites       | MacBook | node.invoke → system.run     |
+| Task                        | Runs on | Mechanism                       |
+|-----------------------------|---------|-------------------------------- |
+| GitLab API calls            | miniPC  | exec tool (curl / glab)         |
+| PiAware polling             | miniPC  | exec tool (curl to dump1090)    |
+| Calendar queries            | miniPC  | exec tool (python helper)       |
+| Cron jobs                   | miniPC  | Gateway cron scheduler          |
+| Manager CLI                 | MacBook | node.invoke → system.run        |
+| IntelliJ focus / open files | MacBook | node.invoke → system.run        |
+| Local git operations        | MacBook | node.invoke → system.run        |
+| Run local test suites       | MacBook | node.invoke → system.run        |
 
 ## Voice (ElevenLabs)
 
