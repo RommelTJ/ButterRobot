@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import os
+import subprocess
 import time
 import urllib.request
 from pathlib import Path
@@ -290,6 +291,31 @@ class PiawarePoller:
         self.save_seen_state()
         return new_alerts
 
+    def send_alert(self, message: str) -> bool:
+        """Send an alert to the OpenClaw agent via CLI."""
+        try:
+            result = subprocess.run(
+                ["openclaw", "agent", "--message", message, "--deliver"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            if result.returncode == 0:
+                logger.info("Agent alert delivered")
+                return True
+            logger.warning(
+                "openclaw agent failed (rc=%d): %s",
+                result.returncode,
+                result.stderr.strip(),
+            )
+            return False
+        except FileNotFoundError:
+            logger.error("openclaw CLI not found in PATH")
+            return False
+        except subprocess.TimeoutExpired:
+            logger.warning("openclaw agent timed out after 60s")
+            return False
+
     def format_alert(self, aircraft: dict) -> str:
         """Format an aircraft dict into a human-readable alert string."""
         callsign = aircraft.get("flight", "").strip()
@@ -382,8 +408,7 @@ def main() -> None:
             for ac in alerts:
                 message = poller.format_alert(ac)
                 logger.info("Alert: %s", message)
-                # TODO: Invoke OpenClaw agent (openclaw chat --message or WebSocket)
-                # For now, log the alert. Integration TBD based on what's available on miniPC.
+                poller.send_alert(message)
         except Exception:
             logger.exception("Error during poll cycle")
         time.sleep(poll_interval)

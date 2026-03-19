@@ -2,6 +2,7 @@
 
 import json
 import math
+import subprocess
 import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -372,3 +373,37 @@ class TestPiawarePoller:
         poller.load_seen_state()
         assert "ae1234" in poller._seen
         assert poller._seen["ae1234"] == pytest.approx(now, abs=1)
+
+    def test_send_alert_success(self):
+        with patch("app.piaware_poller.subprocess.run") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+            result = self.poller.send_alert("Test alert message")
+            assert result is True
+            mock_run.assert_called_once_with(
+                ["openclaw", "agent", "--message", "Test alert message", "--deliver"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+
+    def test_send_alert_cli_failure(self):
+        with patch("app.piaware_poller.subprocess.run") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="", stderr="gateway unreachable"
+            )
+            result = self.poller.send_alert("Test alert")
+            assert result is False
+
+    def test_send_alert_cli_not_found(self):
+        with patch("app.piaware_poller.subprocess.run") as mock_run:
+            mock_run.side_effect = FileNotFoundError()
+            result = self.poller.send_alert("Test alert")
+            assert result is False
+
+    def test_send_alert_timeout(self):
+        with patch("app.piaware_poller.subprocess.run") as mock_run:
+            mock_run.side_effect = subprocess.TimeoutExpired(cmd="openclaw", timeout=60)
+            result = self.poller.send_alert("Test alert")
+            assert result is False
