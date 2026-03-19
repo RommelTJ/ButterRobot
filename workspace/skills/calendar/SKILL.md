@@ -1,7 +1,7 @@
 ---
 name: calendar
 description: Fetch and summarize Office365/Outlook calendar events from a published ICS feed for status briefings and on-demand queries.
-metadata: {"openclaw":{"requires":{"env":["CALENDAR_ICS_URL"]}}}
+metadata: {"openclaw":{"requires":{"env":["CALENDAR_ICS_URL","CALENDAR_TIMEZONE"]}}}
 ---
 
 # Calendar Skill
@@ -11,8 +11,12 @@ calendar questions.
 
 ## Data Source
 
-A published ICS URL from Outlook (Settings → Calendar → Shared calendars → Publish a calendar). No OAuth,
-no API keys — just a URL. Set it as `CALENDAR_ICS_URL` in the gateway environment.
+A published ICS URL from Outlook. Set as `CALENDAR_ICS_URL` in the gateway environment.
+Event times in the ICS feed may be in different timezones (e.g. Mountain Time).
+The helper converts all times to `CALENDAR_TIMEZONE` (default: `America/Los_Angeles`).
+
+**IMPORTANT**: Always use the Python helper below to fetch events. Never curl the ICS URL directly — the raw
+ICS contains times in the organizer's timezone, not the user's. The helper handles timezone conversion.
 
 ## Commands
 
