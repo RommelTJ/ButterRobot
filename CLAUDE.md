@@ -19,19 +19,19 @@ The miniPC is the gateway host. It owns all Claude API calls, skills, cron jobs,
 
 This is a uv-managed Python project.
 
-| Tool | Purpose |
-|------|---------|
-| **FastAPI** | Web framework for the ButterRobot server |
-| **uvicorn** | ASGI server (invoked directly for SSL support) |
-| **websockets** | WebSocket proxy to OpenClaw Gateway |
-| **OpenClaw** | AI agent runtime (Gateway on miniPC at `:18789`) |
-| **Pydantic** | Data validation and serialization |
-| **uv** | Package and project management (`pyproject.toml`) |
-| **pytest** + **pytest-cov** | Testing and coverage |
-| **ruff** | Linting and formatting |
-| **ty** | Static type checking (Astral) |
-| **Docker + docker-compose** | Container build and deployment, port 8585 (HTTPS) |
-| **mkcert** | Local TLS cert for HTTPS on LAN (cert at `~/.certs/` on miniPC) |
+| Tool                        | Purpose                                                         |
+|-----------------------------|-----------------------------------------------------------------|
+| **FastAPI**                 | Web framework for the ButterRobot server                        |
+| **uvicorn**                 | ASGI server (invoked directly for SSL support)                  |
+| **websockets**              | WebSocket proxy to OpenClaw Gateway                             |
+| **OpenClaw**                | AI agent runtime (Gateway on miniPC at `:18789`)                |
+| **Pydantic**                | Data validation and serialization                               |
+| **uv**                      | Package and project management (`pyproject.toml`)               |
+| **pytest** + **pytest-cov** | Testing and coverage                                            |
+| **ruff**                    | Linting and formatting                                          |
+| **ty**                      | Static type checking (Astral)                                   |
+| **Docker + docker-compose** | Container build and deployment, port 8585 (HTTPS)               |
+| **mkcert**                  | Local TLS cert for HTTPS on LAN (cert at `~/.certs/` on miniPC) |
 
 ## Common Commands
 
