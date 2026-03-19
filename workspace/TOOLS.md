@@ -4,13 +4,10 @@ Skills define _how_ tools work. This file is for your specifics — the stuff th
 
 ## GitLab
 
+- Skills: see `skills/gitlab/SKILL.md` for GitLab MR operations
 - Base URL: configured via `GITLAB_URL` env var on the miniPC
 - Auth: `GITLAB_TOKEN` env var (Personal Access Token, stored on miniPC — never commit)
 - All GitLab API calls run on the miniPC via the exec tool (curl or glab CLI)
-- MR listing: `GET /api/v4/merge_requests?state=opened&scope=all`
-- MR diff: `GET /api/v4/projects/:id/merge_requests/:iid/changes`
-- Post comment: `POST /api/v4/projects/:id/merge_requests/:iid/notes`
-- Pipeline status: `GET /api/v4/projects/:id/pipelines`
 
 ## Execution routing
 
