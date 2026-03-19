@@ -1,4 +1,6 @@
-# Tools
+# TOOLS.md - Local Notes
+
+Skills define _how_ tools work. This file is for your specifics — the stuff that's unique to your setup.
 
 ## GitLab
 
