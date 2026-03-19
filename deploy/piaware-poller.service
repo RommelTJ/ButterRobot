@@ -1,0 +1,18 @@
+[Unit]
+Description=PiAware Aircraft Poller
+After=network-online.target pipewire.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/rommel/ButterRobot
+ExecStart=/usr/bin/python3 -m app.piaware_poller
+Restart=always
+RestartSec=10
+
+# Env vars loaded from the gateway drop-in won't apply here.
+# Use an EnvironmentFile or set them directly.
+EnvironmentFile=%h/.config/butterrobot/piaware-poller.env
+
+[Install]
+WantedBy=default.target

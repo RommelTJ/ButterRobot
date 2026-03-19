@@ -68,7 +68,8 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 
 1. Calendar — today's events first
 2. Open GitLab MRs — grouped by author, flagging anything blocked or waiting on review
-3. Urgent items — anything explicitly time-sensitive
+3. Nearby aircraft — only mention if something interesting is currently overhead (skip if nothing notable)
+4. Urgent items — anything explicitly time-sensitive
 
 Keep the total spoken output under 30 seconds. If the user asks for detail, provide it. Otherwise, stop.
 
