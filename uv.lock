@@ -38,7 +38,7 @@ wheels = [
 
 [[package]]
 name = "butterrobot"
-version = "0.5.0"
+version = "0.6.1"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },

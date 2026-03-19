@@ -1,6 +1,6 @@
 # ButterRobot
 
-**v0.6.0 — March 19, 2026**
+**v0.6.1 — March 19, 2026**
 
 > What is my purpose? To read your calendar, review your GitLab MRs, and tell you what's flying over your house.   
 > And to pass the butter.
@@ -69,19 +69,19 @@ The poller runs on the host (not Docker) because it needs `pw-play` access to th
 
 All configured in `~/.config/butterrobot/piaware-poller.env` on the miniPC. See `deploy/piaware-poller.env.example`.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PIAWARE_HOME_LAT` | (required) | Home latitude |
-| `PIAWARE_HOME_LON` | (required) | Home longitude |
-| `ELEVENLABS_API_KEY` | (required) | ElevenLabs API key for TTS |
-| `PIAWARE_AUDIO_SINK` | (required) | PipeWire AirPlay sink name |
-| `ELEVENLABS_VOICE_ID` | `weA4Q36twV5kwSaTEL0Q` | ElevenLabs voice (Callum) |
-| `PIAWARE_URL_1090` | `http://piaware.homelab.com:8080/data/aircraft.json` | dump1090-fa endpoint |
-| `PIAWARE_URL_978` | `http://piaware.homelab.com:80/data/aircraft.json` | skyaware978 UAT endpoint |
-| `PIAWARE_RADIUS_NM` | `2` | Alert radius in nautical miles |
-| `PIAWARE_ALTITUDE_MAX` | `5000` | Max altitude in feet to consider |
-| `PIAWARE_POLL_INTERVAL` | `30` | Seconds between polls |
-| `PIAWARE_STATE_DIR` | `workspace/state` | State directory for focus/dedup files |
+| Variable                | Default                                              | Description                           |
+|-------------------------|------------------------------------------------------|---------------------------------------|
+| `PIAWARE_HOME_LAT`      | (required)                                           | Home latitude                         |
+| `PIAWARE_HOME_LON`      | (required)                                           | Home longitude                        |
+| `ELEVENLABS_API_KEY`    | (required)                                           | ElevenLabs API key for TTS            |
+| `PIAWARE_AUDIO_SINK`    | (required)                                           | PipeWire AirPlay sink name            |
+| `ELEVENLABS_VOICE_ID`   | `weA4Q36twV5kwSaTEL0Q`                               | ElevenLabs voice (Callum)             |
+| `PIAWARE_URL_1090`      | `http://piaware.homelab.com:8080/data/aircraft.json` | dump1090-fa endpoint                  |
+| `PIAWARE_URL_978`       | `http://piaware.homelab.com:80/data/aircraft.json`   | skyaware978 UAT endpoint              |
+| `PIAWARE_RADIUS_NM`     | `2`                                                  | Alert radius in nautical miles        |
+| `PIAWARE_ALTITUDE_MAX`  | `5000`                                               | Max altitude in feet to consider      |
+| `PIAWARE_POLL_INTERVAL` | `30`                                                 | Seconds between polls                 |
+| `PIAWARE_STATE_DIR`     | `workspace/state`                                    | State directory for focus/dedup files |
 
 ### Deployment
 
