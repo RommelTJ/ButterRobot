@@ -122,6 +122,8 @@ Numbers are spoken individually: `N546CA` → "November Five Four Six Charlie Al
 
 Never say "five hundred forty-six" — always "Five Four Six".
 
+**When there is no callsign**, read the ICAO hex code phonetically instead. Example: hex `ae1234` → "Alpha Echo One Two Three Four". Never say "hex prefix A-E" or read raw hex — always spell it out phonetically.
+
 ## On-Demand Query Workflow
 
 When the user asks "anything flying overhead?" or similar:
