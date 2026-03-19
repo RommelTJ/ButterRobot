@@ -49,6 +49,44 @@ and local macOS execution via `node.invoke → system.run`.
 | pytest + pytest-cov     | Testing and coverage                 |
 | Docker + docker-compose | Containerized deployment (port 8585) |
 
+## PiAware Aircraft Tracking
+
+ButterRobot includes a PiAware skill and a Python poller for aircraft tracking via ADS-B.
+
+**Skill** (`workspace/skills/piaware/SKILL.md`): Teaches the OpenClaw agent to interpret aircraft data, respond to on-demand queries ("anything flying overhead?"), and speak phonetic tail numbers.
+
+**Poller** (`app/piaware_poller.py`): A standalone polling script that runs on the miniPC, checks the PiAware 1090 MHz and 978 MHz UAT feeds every 30 seconds, filters for interesting aircraft (military, emergency, helicopters, heavies on approach), and invokes the agent only when something notable appears.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PIAWARE_HOME_LAT` | (required) | Home latitude |
+| `PIAWARE_HOME_LON` | (required) | Home longitude |
+| `PIAWARE_URL_1090` | `http://piaware.homelab.com:8080/data/aircraft.json` | dump1090-fa endpoint |
+| `PIAWARE_URL_978` | `http://piaware.homelab.com:80/data/aircraft.json` | skyaware978 UAT endpoint |
+| `PIAWARE_RADIUS_NM` | `2` | Alert radius in nautical miles |
+| `PIAWARE_ALTITUDE_MAX` | `5000` | Max altitude in feet to consider |
+| `PIAWARE_POLL_INTERVAL` | `30` | Seconds between polls |
+| `PIAWARE_STATE_DIR` | `workspace/state` | State directory for focus/dedup files |
+
+### Running the Poller
+
+```bash
+# Set required env vars
+export PIAWARE_HOME_LAT=32.xxxx
+export PIAWARE_HOME_LON=-117.xxxx
+
+# Run directly
+uv run python -m app.piaware_poller
+
+# Or deploy as a systemd user service on the miniPC
+```
+
+### Focus Mode
+
+Toggle via voice ("focus mode on" / "focus mode off") to silence proactive alerts. On-demand queries always work regardless.
+
 ## Running locally
 
 ```bash

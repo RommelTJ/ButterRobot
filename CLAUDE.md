@@ -117,6 +117,16 @@ Skills are **Markdown files, not code**. They teach the OpenClaw agent what exec
 - Project IDs and team members live in the gitlab skill as a reference — update them there when the team changes
 - Credentials from Rommel's git remotes on the MacBook (under `~/code/work/chatmeter/`) can be used to find API tokens
 
+### PiAware (Raspberry Pi, 192.168.0.211)
+- Hostname: `piaware.homelab.com` (add to `/etc/hosts`: `192.168.0.211 piaware.homelab.com`)
+- dump1090-fa (1090 MHz ADS-B): `http://piaware.homelab.com:8080/data/aircraft.json`
+- skyaware978 (978 MHz UAT): `http://piaware.homelab.com:80/data/aircraft.json`
+- Poller script: `app/piaware_poller.py` — runs as a standalone process on the miniPC
+- Poller env vars: `PIAWARE_HOME_LAT`, `PIAWARE_HOME_LON` (required), plus optional `PIAWARE_URL_1090`, `PIAWARE_URL_978`, `PIAWARE_RADIUS_NM`, `PIAWARE_ALTITUDE_MAX`, `PIAWARE_POLL_INTERVAL`, `PIAWARE_STATE_DIR`
+- Run poller: `PIAWARE_HOME_LAT=... PIAWARE_HOME_LON=... uv run python -m app.piaware_poller`
+- State files: `workspace/state/piaware-focus.json` (focus mode), `workspace/state/piaware-seen.json` (dedup)
+- Deploy: Add `Environment=PIAWARE_*` lines to `~/.config/systemd/user/openclaw-gateway.service` on miniPC, or create a separate systemd service for the poller
+
 ## Conventions
 
 - All endpoints must have return type annotations.
