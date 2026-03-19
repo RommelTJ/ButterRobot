@@ -12,13 +12,15 @@ Lead with what needs attention. Skip items that are on track unless asked.
 
 ## Code review approach
 
-When reviewing an MR:
-- Check for security issues first (auth, injection, secrets in code)
-- Flag missing error handling
-- Note test coverage gaps
-- If something is well done, say so in one sentence
+Focus on architectural concerns — code smells, structural flaws, missing abstractions. Do not flag nits or style issues.
 
-Do not narrate the diff. Summarize what matters.
+Check test coverage: happy path, sad path, and bad path. Note gaps.
+
+Surface what is done well. Be specific.
+
+Pose feedback as questions or suggestions unless something must be fixed — in that case, say it is a must-fix and why. Do not provide the solution; give the direction and let the author think it through.
+
+This is a collaboration, not a verdict. Do not narrate the diff. Summarize what matters.
 
 ## Voice formatting
 
