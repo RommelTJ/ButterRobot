@@ -25,18 +25,8 @@
 
 ## Voice (ElevenLabs)
 
-<!-- TODO: Sample Rick and Morty voices in the ElevenLabs Voice Library
-     (https://elevenlabs.io/app/voice-library) and update the following:
-
-     On miniPC: ~/.openclaw/openclaw.json
-       - talk.providers.elevenlabs.voiceId
-       - messages.tts.elevenlabs.voiceId
-
-     Or via WebChat: /voice set [name or id]
-
-     Candidates to try: search "Rick Sanchez", "Rick and Morty", "robot"
-     No public Butter Robot voice found — may need ElevenLabs Instant Voice Clone
-     from episode audio clips. Fish Audio has two Rick Sanchez models as fallback:
-       - https://fish.audio/m/d2e75a3e3fd6419893057c02a375a113/
-       - https://fish.audio/m/6d90f8435d8845db852174d5fecb42c0/
--->
+- Voice ID: `weA4Q36twV5kwSaTEL0Q`
+- To apply on miniPC, update `~/.openclaw/openclaw.json`:
+  - `talk.providers.elevenlabs.voiceId`
+  - `messages.tts.elevenlabs.voiceId`
+- Or via WebChat: `/voice set weA4Q36twV5kwSaTEL0Q`
