@@ -68,7 +68,7 @@ uv run task typecheck
 - Restart ButterRobot: `cd ~/ButterRobot && docker compose restart`
 
 ### OpenClaw config (`~/.openclaw/openclaw.json`)
-- Gateway auth token: `6dcc826622553bff16131d9e1877e61a94c3a1172e5aa992`
+- Gateway auth token: stored in `~/.openclaw/openclaw.json` on the miniPC — do not commit
 - Allowed origins include `https://homelab:8585` and `https://homelab.homelab.com:8585`
 - ElevenLabs voice: Callum (N2lVS1w4EtoT3dr4eOWO), configured in both `talk` and `messages.tts` sections
 
