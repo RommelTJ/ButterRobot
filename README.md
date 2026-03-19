@@ -100,6 +100,29 @@ journalctl --user -u piaware-poller.service -f
 
 Toggle via voice ("focus mode on" / "focus mode off") to silence proactive alerts. On-demand queries always work regardless.
 
+## Calendar Integration
+
+Office365/Outlook calendar integration via a published ICS feed. No OAuth, no Azure app registration — just a URL. Fetches events for status briefings and on-demand queries ("What's on my calendar?", "Anything tomorrow?").
+
+**Skill** (`workspace/skills/calendar/SKILL.md`): Teaches the OpenClaw agent to invoke the helper and summarize events concisely for voice.
+
+**Helper** (`app/calendar_helper.py`): Fetches the ICS feed, filters by date, handles recurring events, outputs JSON to stdout.
+
+### Setup
+
+1. Outlook web → Settings → Calendar → Shared calendars → Publish a calendar → copy the ICS link
+2. Set `CALENDAR_ICS_URL` in the gateway systemd environment on the miniPC
+
+See `deploy/calendar-helper.env.example`.
+
+## Manager CLI
+
+Natural language interface to the Typer-based manager CLI on the MacBook. Ask about team reports, 1-1 prep, code stats, vacations, and goals — the agent maps natural language to CLI commands.
+
+**Skill** (`workspace/skills/manager/SKILL.md`): Teaches the OpenClaw agent to map queries like "how's Mitchell doing?" to `manager prep Mitchell` and summarize the output for voice.
+
+All commands are read-only and run on the MacBook via `node.invoke → system.run`. The MacBook must be connected to the gateway.
+
 ## Running locally
 
 ```bash
