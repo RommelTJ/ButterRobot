@@ -2,6 +2,7 @@
 
 import json
 import math
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -374,36 +375,95 @@ class TestPiawarePoller:
         assert "ae1234" in poller._seen
         assert poller._seen["ae1234"] == pytest.approx(now, abs=1)
 
-    def test_send_alert_success(self):
+    def test_speak_alert_success(self):
+        with (
+            patch.dict(os.environ, {
+                "ELEVENLABS_API_KEY": "test-key",
+                "PIAWARE_AUDIO_SINK": "raop_sink.Office-HomePod",
+            }),
+            patch.object(self.poller, "_elevenlabs_tts", return_value=b"fake-audio"),
+            patch.object(self.poller, "_play_audio", return_value=True),
+        ):
+            result = self.poller.speak_alert("Test alert")
+            assert result is True
+
+    def test_speak_alert_no_api_key(self):
+        with patch.dict(os.environ, {"PIAWARE_AUDIO_SINK": "sink"}, clear=False):
+            os.environ.pop("ELEVENLABS_API_KEY", None)
+            result = self.poller.speak_alert("Test alert")
+            assert result is False
+
+    def test_speak_alert_no_sink(self):
+        with patch.dict(os.environ, {"ELEVENLABS_API_KEY": "key"}, clear=False):
+            os.environ.pop("PIAWARE_AUDIO_SINK", None)
+            result = self.poller.speak_alert("Test alert")
+            assert result is False
+
+    def test_speak_alert_tts_failure(self):
+        with (
+            patch.dict(os.environ, {
+                "ELEVENLABS_API_KEY": "test-key",
+                "PIAWARE_AUDIO_SINK": "sink",
+            }),
+            patch.object(self.poller, "_elevenlabs_tts", return_value=None),
+        ):
+            result = self.poller.speak_alert("Test alert")
+            assert result is False
+
+    def test_elevenlabs_tts_success(self):
+        mock_response = MagicMock()
+        mock_response.read.return_value = b"fake-mp3-data"
+        mock_response.__enter__ = lambda s: s
+        mock_response.__exit__ = MagicMock(return_value=False)
+
+        with patch("app.piaware_poller.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.return_value = mock_response
+            result = self.poller._elevenlabs_tts("Hello", "api-key", "voice-id")
+            assert result == b"fake-mp3-data"
+
+    def test_elevenlabs_tts_failure(self):
+        with patch("app.piaware_poller.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.side_effect = Exception("API error")
+            result = self.poller._elevenlabs_tts("Hello", "api-key", "voice-id")
+            assert result is None
+
+    def test_play_audio_success(self):
         with patch("app.piaware_poller.subprocess.run") as mock_run:
             mock_run.return_value = subprocess.CompletedProcess(
                 args=[], returncode=0, stdout="", stderr=""
             )
-            result = self.poller.send_alert("Test alert message")
+            result = self.poller._play_audio(b"fake-audio", "test-sink")
             assert result is True
-            mock_run.assert_called_once_with(
-                ["openclaw", "agent", "--message", "Test alert message", "--deliver"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
+            args = mock_run.call_args[0][0]
+            assert args[0] == "pw-play"
+            assert args[1] == "--target=test-sink"
 
-    def test_send_alert_cli_failure(self):
+    def test_play_audio_pw_play_failure(self):
         with patch("app.piaware_poller.subprocess.run") as mock_run:
             mock_run.return_value = subprocess.CompletedProcess(
-                args=[], returncode=1, stdout="", stderr="gateway unreachable"
+                args=[], returncode=1, stdout="", stderr="sink not found"
             )
-            result = self.poller.send_alert("Test alert")
+            result = self.poller._play_audio(b"fake-audio", "bad-sink")
             assert result is False
 
-    def test_send_alert_cli_not_found(self):
+    def test_play_audio_pw_play_not_found(self):
         with patch("app.piaware_poller.subprocess.run") as mock_run:
             mock_run.side_effect = FileNotFoundError()
-            result = self.poller.send_alert("Test alert")
+            result = self.poller._play_audio(b"fake-audio", "sink")
             assert result is False
 
-    def test_send_alert_timeout(self):
+    def test_play_audio_timeout(self):
         with patch("app.piaware_poller.subprocess.run") as mock_run:
-            mock_run.side_effect = subprocess.TimeoutExpired(cmd="openclaw", timeout=60)
-            result = self.poller.send_alert("Test alert")
+            mock_run.side_effect = subprocess.TimeoutExpired(cmd="pw-play", timeout=30)
+            result = self.poller._play_audio(b"fake-audio", "sink")
             assert result is False
+
+    def test_play_audio_cleans_up_temp_file(self):
+        with patch("app.piaware_poller.subprocess.run") as mock_run:
+            mock_run.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="", stderr=""
+            )
+            self.poller._play_audio(b"fake-audio", "sink")
+            # The temp file arg should have been cleaned up
+            tmp_path = mock_run.call_args[0][0][2]
+            assert not Path(tmp_path).exists()

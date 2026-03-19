@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import subprocess
+import tempfile
 import time
 import urllib.request
 from pathlib import Path
@@ -291,35 +292,94 @@ class PiawarePoller:
         self.save_seen_state()
         return new_alerts
 
-    def send_alert(self, message: str) -> bool:
-        """Send an alert to the OpenClaw agent via CLI."""
-        try:
-            result = subprocess.run(
-                ["openclaw", "agent", "--message", message, "--deliver"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            if result.returncode == 0:
-                logger.info("Agent alert delivered")
-                return True
-            logger.warning(
-                "openclaw agent failed (rc=%d): %s",
-                result.returncode,
-                result.stderr.strip(),
-            )
+    def speak_alert(self, text: str) -> bool:
+        """Synthesize speech via ElevenLabs and play on the AirPlay sink."""
+        api_key = os.environ.get("ELEVENLABS_API_KEY", "")
+        voice_id = os.environ.get(
+            "ELEVENLABS_VOICE_ID", "weA4Q36twV5kwSaTEL0Q"
+        )
+        sink = os.environ.get("PIAWARE_AUDIO_SINK", "")
+
+        if not api_key:
+            logger.error("ELEVENLABS_API_KEY not set, cannot speak alert")
             return False
-        except FileNotFoundError:
-            logger.error("openclaw CLI not found in PATH")
-            return False
-        except subprocess.TimeoutExpired:
-            logger.warning("openclaw agent timed out after 60s")
+        if not sink:
+            logger.error("PIAWARE_AUDIO_SINK not set, cannot play audio")
             return False
 
+        try:
+            audio_data = self._elevenlabs_tts(text, api_key, voice_id)
+            if not audio_data:
+                return False
+            return self._play_audio(audio_data, sink)
+        except Exception:
+            logger.exception("Failed to speak alert")
+            return False
+
+    def _elevenlabs_tts(
+        self, text: str, api_key: str, voice_id: str
+    ) -> bytes | None:
+        """Call ElevenLabs TTS API and return audio bytes."""
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+        payload = json.dumps({
+            "text": text,
+            "model_id": "eleven_multilingual_v2",
+            "voice_settings": {
+                "stability": 0.5,
+                "similarity_boost": 0.75,
+                "style": 0.0,
+                "use_speaker_boost": True,
+            },
+        }).encode()
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={
+                "xi-api-key": api_key,
+                "Content-Type": "application/json",
+                "Accept": "audio/mpeg",
+            },
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                return response.read()
+        except Exception:
+            logger.exception("ElevenLabs TTS request failed")
+            return None
+
+    def _play_audio(self, audio_data: bytes, sink: str) -> bool:
+        """Write audio to a temp file and play via pw-play to the AirPlay sink."""
+        with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+            f.write(audio_data)
+            tmp_path = f.name
+        try:
+            result = subprocess.run(
+                ["pw-play", f"--target={sink}", tmp_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode != 0:
+                logger.warning(
+                    "pw-play failed (rc=%d): %s",
+                    result.returncode,
+                    result.stderr.strip(),
+                )
+                return False
+            return True
+        except FileNotFoundError:
+            logger.error("pw-play not found in PATH")
+            return False
+        except subprocess.TimeoutExpired:
+            logger.warning("pw-play timed out")
+            return False
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+
     def format_alert(self, aircraft: dict) -> str:
-        """Format an aircraft dict into a human-readable alert string."""
+        """Format an aircraft dict into a spoken alert sentence."""
         callsign = aircraft.get("flight", "").strip()
-        alt = aircraft.get("alt_baro", "unknown")
+        alt = aircraft.get("alt_baro")
         heading = track_to_compass(aircraft.get("track"))
         category = aircraft.get("category", "")
         hex_code = aircraft.get("hex", "")
@@ -330,29 +390,37 @@ class PiawarePoller:
             distance = calculate_distance_nm(
                 self.filter.home_lat, self.filter.home_lon, lat, lon
             )
-            dist_str = f"{distance:.1f} NM"
+            dist_str = f"{distance:.0f} mile{'s' if distance >= 1.5 else ''} out"
         else:
-            dist_str = "unknown distance"
+            dist_str = "nearby"
 
+        # Build type description
         parts = []
         if is_emergency_squawk(aircraft):
             squawk = aircraft.get("squawk", "")
-            parts.append(f"EMERGENCY squawk {squawk}")
+            parts.append(f"Emergency squawk {squawk}")
         if is_military(aircraft):
-            parts.append("military")
+            parts.append("Military")
         if category == "A7":
             parts.append("helicopter")
         elif category == "A5":
             parts.append("heavy")
+        elif not parts:
+            parts.append("Aircraft")
 
-        type_str = " ".join(parts) if parts else "aircraft"
-        ident = callsign or hex_code
+        type_str = " ".join(parts)
 
-        return (
-            f"Proactive PiAware alert: {type_str} {ident}, "
-            f"{alt} ft, heading {heading}, {dist_str}. "
-            f"Announce this to me briefly."
-        )
+        # Format altitude in spoken style
+        if alt is not None and isinstance(alt, (int, float)):
+            alt_hundreds = round(alt / 100) * 100
+            alt_str = f"{alt_hundreds} feet"
+        else:
+            alt_str = "altitude unknown"
+
+        # Identify the aircraft
+        ident = callsign or hex_code or "no callsign"
+
+        return f"{type_str}, {ident}, {dist_str}, {alt_str}, heading {heading}."
 
 
 def main() -> None:
@@ -408,7 +476,7 @@ def main() -> None:
             for ac in alerts:
                 message = poller.format_alert(ac)
                 logger.info("Alert: %s", message)
-                poller.send_alert(message)
+                poller.speak_alert(message)
         except Exception:
             logger.exception("Error during poll cycle")
         time.sleep(poll_interval)
