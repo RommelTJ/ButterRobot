@@ -1,8 +1,9 @@
 """Tests for calendar_helper — ICS feed fetching and event filtering."""
 
 import json
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pytest
 from icalendar import Calendar, Event
@@ -128,6 +129,69 @@ class TestFetchEvents:
         with patch.dict("os.environ", {}, clear=True):
             with pytest.raises(SystemExit):
                 fetch_events(target_date="2026-03-19")
+
+    @patch("app.calendar_helper.fetch_ics")
+    def test_converts_to_local_timezone(self, mock_fetch_ics):
+        # Event at 1 PM Mountain Time (UTC-6 during MDT)
+        mountain = ZoneInfo("America/Denver")
+        mock_fetch_ics.return_value = _make_ics_feed(
+            {
+                "summary": "Pi Day Demos",
+                "dtstart": datetime(2026, 3, 20, 13, 0, tzinfo=mountain),
+                "dtend": datetime(2026, 3, 20, 15, 30, tzinfo=mountain),
+            }
+        )
+
+        result = fetch_events(
+            target_date="2026-03-20",
+            ics_url="https://example.com/cal.ics",
+            tz_name="America/Los_Angeles",
+        )
+
+        assert len(result) == 1
+        # 1 PM Mountain = 12 PM Pacific
+        assert "T12:00:00" in result[0]["start"]
+        assert "T14:30:00" in result[0]["end"]
+
+    @patch("app.calendar_helper.fetch_ics")
+    def test_respects_calendar_timezone_env(self, mock_fetch_ics):
+        # Event at 3 PM UTC
+        mock_fetch_ics.return_value = _make_ics_feed(
+            {
+                "summary": "UTC Meeting",
+                "dtstart": datetime(2026, 3, 19, 15, 0, tzinfo=timezone.utc),
+                "dtend": datetime(2026, 3, 19, 16, 0, tzinfo=timezone.utc),
+            }
+        )
+
+        with patch.dict("os.environ", {"CALENDAR_TIMEZONE": "America/New_York"}):
+            result = fetch_events(
+                target_date="2026-03-19",
+                ics_url="https://example.com/cal.ics",
+            )
+
+        assert len(result) == 1
+        # 3 PM UTC = 11 AM EDT
+        assert "T11:00:00" in result[0]["start"]
+
+    @patch("app.calendar_helper.fetch_ics")
+    def test_all_day_events_not_converted(self, mock_fetch_ics):
+        mock_fetch_ics.return_value = _make_ics_feed(
+            {
+                "summary": "Holiday",
+                "dtstart": date(2026, 3, 19),
+                "dtend": date(2026, 3, 20),
+            }
+        )
+
+        result = fetch_events(
+            target_date="2026-03-19",
+            ics_url="https://example.com/cal.ics",
+            tz_name="America/Los_Angeles",
+        )
+
+        assert result[0]["is_all_day"] is True
+        assert result[0]["start"] == "2026-03-19"
 
 
 class TestMain:

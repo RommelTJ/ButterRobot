@@ -9,11 +9,14 @@ import argparse
 import json
 import os
 import sys
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone
 from urllib.request import urlopen
+from zoneinfo import ZoneInfo
 
 import recurring_ical_events
 from icalendar import Calendar
+
+DEFAULT_TIMEZONE = "America/Los_Angeles"
 
 
 def fetch_ics(url: str) -> Calendar:
@@ -22,7 +25,19 @@ def fetch_ics(url: str) -> Calendar:
         return Calendar.from_ical(resp.read())
 
 
-def fetch_events(target_date: str | None = None, ics_url: str | None = None) -> list[dict]:
+def _to_local(dt: datetime, local_tz: ZoneInfo) -> datetime:
+    """Convert a datetime to the local timezone."""
+    if dt.tzinfo is None:
+        # Naive datetime — assume UTC
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(local_tz)
+
+
+def fetch_events(
+    target_date: str | None = None,
+    ics_url: str | None = None,
+    tz_name: str | None = None,
+) -> list[dict]:
     """Fetch calendar events for a given date (default: today).
 
     Returns a list of dicts with keys:
@@ -33,15 +48,17 @@ def fetch_events(target_date: str | None = None, ics_url: str | None = None) -> 
         print("Error: CALENDAR_ICS_URL must be set", file=sys.stderr)
         sys.exit(1)
 
+    local_tz = ZoneInfo(tz_name or os.environ.get("CALENDAR_TIMEZONE", DEFAULT_TIMEZONE))
+
     cal = fetch_ics(url)
 
     if target_date:
         day = datetime.strptime(target_date, "%Y-%m-%d").date()
     else:
-        day = datetime.now().date()
+        day = datetime.now(local_tz).date()
 
-    day_start = datetime.combine(day, time.min)
-    day_end = datetime.combine(day, time.max)
+    day_start = datetime.combine(day, time.min, tzinfo=local_tz)
+    day_end = datetime.combine(day, time.max, tzinfo=local_tz)
 
     events = recurring_ical_events.of(cal).between(day_start, day_end)
 
@@ -53,6 +70,12 @@ def fetch_events(target_date: str | None = None, ics_url: str | None = None) -> 
         end_val = dtend.dt if dtend else None
 
         is_all_day = isinstance(start_val, date) and not isinstance(start_val, datetime)
+
+        if not is_all_day:
+            if isinstance(start_val, datetime):
+                start_val = _to_local(start_val, local_tz)
+            if isinstance(end_val, datetime):
+                end_val = _to_local(end_val, local_tz)
 
         result.append(
             {
