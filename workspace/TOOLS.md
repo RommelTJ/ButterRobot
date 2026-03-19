@@ -12,22 +12,16 @@
 
 ## Execution routing
 
-| Task | Runs on | Mechanism |
-|------|---------|-----------|
-| GitLab API calls | miniPC | exec tool (curl / glab) |
-| PiAware polling | miniPC | exec tool (curl to dump1090) |
-| Calendar queries | miniPC | exec tool (gcalcli or API) |
-| Cron jobs | miniPC | Gateway cron scheduler |
-| IntelliJ focus / open files | MacBook | node.invoke → system.run |
-| Local git operations | MacBook | node.invoke → system.run |
-| Manager CLI | MacBook | node.invoke → system.run |
-| Run local test suites | MacBook | node.invoke → system.run |
-
-## MR review standards
-
-- Flag: security issues, unhandled errors, missing test coverage, hardcoded secrets
-- Note: breaking changes, missing documentation on public interfaces
-- Approve with note when the MR is clean but minor suggestions remain
+| Task                        | Runs on | Mechanism                    |
+|-----------------------------|---------|------------------------------|
+| GitLab API calls            | miniPC  | exec tool (curl / glab)      |
+| PiAware polling             | miniPC  | exec tool (curl to dump1090) |
+| Calendar queries            | miniPC  | exec tool (gcalcli or API)   |
+| Cron jobs                   | miniPC  | Gateway cron scheduler       |
+| IntelliJ focus / open files | MacBook | node.invoke → system.run     |
+| Local git operations        | MacBook | node.invoke → system.run     |
+| Manager CLI                 | MacBook | node.invoke → system.run     |
+| Run local test suites       | MacBook | node.invoke → system.run     |
 
 ## Voice (ElevenLabs)
 
