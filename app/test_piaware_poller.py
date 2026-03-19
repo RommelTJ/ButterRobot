@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from app.piaware_poller import (
+    DEFAULT_ALERT_TYPES,
     AircraftFilter,
     PiawarePoller,
     calculate_distance_nm,
@@ -163,58 +164,114 @@ class TestAircraftFilter:
         base.update(overrides)
         return base
 
+    # --- Emergencies: always on, not configurable ---
+
     def test_emergency_always_interesting(self):
         ac = self._make_aircraft(squawk="7700", lat=33.5, lon=-118.0)
-        result = self.filter.is_interesting(ac)
-        assert result is True
+        assert self.filter.is_interesting(ac) is True
+
+    def test_emergency_interesting_even_with_empty_alert_types(self):
+        f = AircraftFilter(
+            home_lat=32.7, home_lon=-117.2, alert_types=frozenset()
+        )
+        ac = self._make_aircraft(squawk="7700", lat=33.5, lon=-118.0)
+        assert f.is_interesting(ac) is True
+
+    # --- Default alert_types ---
+
+    def test_default_alert_types(self):
+        assert self.filter.alert_types == DEFAULT_ALERT_TYPES
+        assert DEFAULT_ALERT_TYPES == frozenset({"military", "helicopter", "heavy"})
+
+    # --- Military filtering ---
 
     def test_military_within_range(self):
         ac = self._make_aircraft(hex="ae1234", flight="")
-        result = self.filter.is_interesting(ac)
-        assert result is True
+        assert self.filter.is_interesting(ac) is True
+
+    def test_military_not_interesting_when_disabled(self):
+        f = AircraftFilter(
+            home_lat=32.7, home_lon=-117.2, alert_types=frozenset({"heavy"})
+        )
+        ac = self._make_aircraft(hex="ae1234", flight="")
+        assert f.is_interesting(ac) is False
+
+    # --- Helicopter filtering ---
 
     def test_helicopter_low_altitude_nearby(self):
         ac = self._make_aircraft(category="A7", flight="SHWK1   ")
-        result = self.filter.is_interesting(ac)
-        assert result is True
+        assert self.filter.is_interesting(ac) is True
 
-    def test_heavy_on_approach(self):
+    def test_helicopter_not_interesting_when_disabled(self):
+        f = AircraftFilter(
+            home_lat=32.7, home_lon=-117.2, alert_types=frozenset({"military"})
+        )
+        ac = self._make_aircraft(category="A7", flight="SHWK1   ")
+        assert f.is_interesting(ac) is False
+
+    # --- Heavy aircraft filtering ---
+
+    def test_heavy_non_commercial_on_approach(self):
         ac = self._make_aircraft(category="A5", flight="BAW286  ", baro_rate=-800)
-        result = self.filter.is_interesting(ac)
-        assert result is True
+        assert self.filter.is_interesting(ac) is True
 
-    def test_routine_commercial_within_range_is_interesting(self):
+    def test_heavy_commercial_on_approach_descending(self):
+        ac = self._make_aircraft(category="A5", flight="FDX1234 ", baro_rate=-500)
+        assert self.filter.is_interesting(ac) is True
+
+    def test_heavy_commercial_approach_nav_mode(self):
+        ac = self._make_aircraft(
+            category="A5", flight="UPS456  ", baro_rate=0, nav_modes=["approach"]
+        )
+        assert self.filter.is_interesting(ac) is True
+
+    def test_heavy_commercial_not_on_approach_rejected(self):
+        """Commercial heavy that's climbing or level — not on approach, skip it."""
+        ac = self._make_aircraft(
+            category="A5", flight="FDX1234 ", baro_rate=500, nav_modes=[]
+        )
+        assert self.filter.is_interesting(ac) is False
+
+    def test_heavy_not_interesting_when_disabled(self):
+        f = AircraftFilter(
+            home_lat=32.7, home_lon=-117.2, alert_types=frozenset({"military"})
+        )
+        ac = self._make_aircraft(category="A5", flight="BAW286  ", baro_rate=-800)
+        assert f.is_interesting(ac) is False
+
+    # --- "all" mode ---
+
+    def test_all_mode_alerts_on_routine_commercial(self):
+        f = AircraftFilter(
+            home_lat=32.7, home_lon=-117.2, alert_types=frozenset({"all"})
+        )
+        ac = self._make_aircraft(category="A3", flight="SWA1234 ")
+        assert f.is_interesting(ac) is True
+
+    # --- Default rejects routine commercial ---
+
+    def test_routine_commercial_not_interesting_with_defaults(self):
+        """A regular A3 Southwest flight should NOT alert with default types."""
         ac = self._make_aircraft(category="A3", flight="SWA1234 ", baro_rate=-500)
-        result = self.filter.is_interesting(ac)
-        assert result is True
+        assert self.filter.is_interesting(ac) is False
+
+    # --- Common rejection cases ---
 
     def test_aircraft_without_position_not_interesting(self):
         ac = self._make_aircraft()
         del ac["lat"]
         del ac["lon"]
-        result = self.filter.is_interesting(ac)
-        # No position = can't determine distance, not interesting (unless emergency)
-        assert result is False
+        assert self.filter.is_interesting(ac) is False
 
     def test_aircraft_out_of_range_not_interesting(self):
-        # ~10 NM north
         ac = self._make_aircraft(lat=32.7 + 10 / 60)
-        result = self.filter.is_interesting(ac)
-        assert result is False
+        assert self.filter.is_interesting(ac) is False
 
     def test_aircraft_too_high_not_interesting(self):
         ac = self._make_aircraft(alt_baro=35000, category="A5")
-        result = self.filter.is_interesting(ac)
-        assert result is False
+        assert self.filter.is_interesting(ac) is False
 
-    def test_approach_mode_helicopter(self):
-        ac = self._make_aircraft(
-            category="A7",
-            nav_modes=["approach"],
-            baro_rate=0,
-        )
-        result = self.filter.is_interesting(ac)
-        assert result is True
+    # --- filter_interesting list ---
 
     def test_filter_list(self):
         in_range = self._make_aircraft(hex="ae1234", flight="EVAC1   ")
