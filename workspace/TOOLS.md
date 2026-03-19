@@ -9,6 +9,14 @@ Skills define _how_ tools work. This file is for your specifics — the stuff th
 - Auth: `GITLAB_TOKEN` env var (Personal Access Token, stored on miniPC — never commit)
 - All GitLab API calls run on the miniPC via the exec tool (curl or glab CLI)
 
+## PiAware
+
+- Skill: see `skills/piaware/SKILL.md` for aircraft tracking operations
+- Data source: PiAware receiver on LAN (dump1090-fa 1090MHz + skyaware978 UAT)
+- Home position: `$PIAWARE_HOME_LAT` / `$PIAWARE_HOME_LON` env vars (never hardcode)
+- Proactive alerts: Python poller script filters locally, invokes agent only for interesting aircraft
+- Focus mode: `workspace/state/piaware-focus.json` — toggle via voice ("focus mode on/off")
+
 ## Execution routing
 
 | Task                        | Runs on | Mechanism                    |
