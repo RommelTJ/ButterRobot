@@ -55,9 +55,12 @@ uv run task typecheck
 ## Infrastructure
 
 ### miniPC (homelab, 192.168.0.205)
+- OS: Ubuntu 24.04 LTS, PipeWire audio (with AirPlay/RAOP support)
 - Hostname: `homelab.homelab.com` (add to `/etc/hosts` on any client: `192.168.0.205 homelab.homelab.com homelab`)
 - OpenClaw gateway runs on `127.0.0.1:18789` (loopback only)
 - ButterRobot runs in Docker at port 8585 (HTTPS), proxies to OpenClaw gateway
+- PiAware poller runs as a systemd user service (on host, not Docker — needs `pw-play` for AirPlay)
+- AirPlay sink: Office HomePod at `raop_sink.Office-HomePod.local.192.168.0.84.7000`
 - mkcert CA at `~/.local/share/mkcert/rootCA.pem` — must be installed on each client machine:
   ```bash
   scp rommel@homelab.homelab.com:/home/rommel/.local/share/mkcert/rootCA.pem /tmp/homelab-rootCA.pem
@@ -120,12 +123,31 @@ Skills are **Markdown files, not code**. They teach the OpenClaw agent what exec
 ### PiAware (Raspberry Pi, 192.168.0.211)
 - Hostname: `piaware.homelab.com` (add to `/etc/hosts`: `192.168.0.211 piaware.homelab.com`)
 - dump1090-fa (1090 MHz ADS-B): `http://piaware.homelab.com:8080/data/aircraft.json`
-- skyaware978 (978 MHz UAT): `http://piaware.homelab.com:80/data/aircraft.json`
-- Poller script: `app/piaware_poller.py` — runs as a standalone process on the miniPC
-- Poller env vars: `PIAWARE_HOME_LAT`, `PIAWARE_HOME_LON` (required), plus optional `PIAWARE_URL_1090`, `PIAWARE_URL_978`, `PIAWARE_RADIUS_NM`, `PIAWARE_ALTITUDE_MAX`, `PIAWARE_POLL_INTERVAL`, `PIAWARE_STATE_DIR`
-- Run poller: `PIAWARE_HOME_LAT=... PIAWARE_HOME_LON=... uv run python -m app.piaware_poller`
-- State files: `workspace/state/piaware-focus.json` (focus mode), `workspace/state/piaware-seen.json` (dedup)
-- Deploy: Add `Environment=PIAWARE_*` lines to `~/.config/systemd/user/openclaw-gateway.service` on miniPC, or create a separate systemd service for the poller
+- skyaware978 (978 MHz UAT): `http://piaware.homelab.com:80/data/aircraft.json` (may 404 if UAT receiver not running)
+
+### PiAware Poller (systemd service on miniPC)
+- **Script**: `app/piaware_poller.py` — pure stdlib Python, runs directly on the host (not in Docker)
+- **Service file**: `deploy/piaware-poller.service` — symlinked to `~/.config/systemd/user/piaware-poller.service`
+- **Env file**: `~/.config/butterrobot/piaware-poller.env` (see `deploy/piaware-poller.env.example`)
+- **Audio output**: ElevenLabs TTS API → mp3 → `pw-play` → PipeWire AirPlay → Office HomePod
+- **State files**: `workspace/state/piaware-focus.json` (focus mode), `workspace/state/piaware-seen.json` (dedup)
+- **Manage**:
+  ```bash
+  systemctl --user status piaware-poller.service
+  systemctl --user restart piaware-poller.service
+  journalctl --user -u piaware-poller.service -f   # tail logs
+  ```
+- **Env vars** (all in `piaware-poller.env`):
+  - `PIAWARE_HOME_LAT`, `PIAWARE_HOME_LON` — home coordinates (required)
+  - `PIAWARE_URL_1090`, `PIAWARE_URL_978` — feed endpoints
+  - `PIAWARE_RADIUS_NM` (default 2), `PIAWARE_ALTITUDE_MAX` (default 5000), `PIAWARE_POLL_INTERVAL` (default 30)
+  - `PIAWARE_STATE_DIR` — path to state files
+  - `PIAWARE_AUDIO_SINK` — PipeWire AirPlay sink name (required for audio)
+  - `ELEVENLABS_API_KEY` — ElevenLabs API key (required for audio)
+  - `ELEVENLABS_VOICE_ID` — voice to use (default: Callum)
+- **Gateway env vars** (in `~/.config/systemd/user/openclaw-gateway.service.d/piaware.conf`):
+  - `PIAWARE_HOME_LAT`, `PIAWARE_HOME_LON`, `PIAWARE_URL_1090`, `PIAWARE_URL_978` — for the OpenClaw skill's on-demand queries
+  - `ELEVENLABS_API_KEY`, `PIAWARE_AUDIO_SINK` — also here for shared access
 
 ## Conventions
 
