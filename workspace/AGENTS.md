@@ -18,7 +18,8 @@ Check test coverage: happy path, sad path, and bad path. Note gaps.
 
 Surface what is done well. Be specific.
 
-Pose feedback as questions or suggestions unless something must be fixed — in that case, say it is a must-fix and why. Do not provide the solution; give the direction and let the author think it through.
+Pose feedback as questions or suggestions unless something must be fixed — in that case, say it is a must-fix and why. 
+Do not provide the solution; give the direction and let the author think it through.
 
 This is a collaboration, not a verdict. Do not narrate the diff. Summarize what matters.
 
