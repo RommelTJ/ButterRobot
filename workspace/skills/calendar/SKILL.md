@@ -1,28 +1,20 @@
 ---
 name: calendar
-description: Fetch and summarize Office365/Outlook calendar events from a published ICS feed for status briefings and on-demand queries.
-metadata: {"openclaw":{"requires":{"env":["CALENDAR_ICS_URL","CALENDAR_TIMEZONE"]}}}
+description: Fetch and summarize Office365/Outlook calendar events for status briefings and on-demand queries.
+metadata: {"openclaw":{"requires":{"env":["CALENDAR_TIMEZONE"]}}}
 ---
 
 # Calendar Skill
 
-Query Office365/Outlook calendar events via a published ICS feed. Used for status briefings and on-demand
-calendar questions.
+Query calendar events for status briefings and on-demand calendar questions.
 
-## Data Source
+## How to Fetch Events
 
-A published ICS URL from Outlook. Set as `CALENDAR_ICS_URL` in the gateway environment.
-Event times in the ICS feed may be in different timezones (e.g. Mountain Time).
-The helper converts all times to `CALENDAR_TIMEZONE` (default: `America/Los_Angeles`).
-
-**IMPORTANT**: Always use the Python helper below to fetch events. Never curl the ICS URL directly — the raw
-ICS contains times in the organizer's timezone, not the user's. The helper handles timezone conversion.
-
-## Commands
-
-All commands run on the miniPC via the exec tool from `/home/rommel/ButterRobot`:
+**You MUST use this Python helper. There is no other way to get calendar data.**
 
 ```bash
+# Run from /home/rommel/ButterRobot on the miniPC via exec tool
+
 # Today's events
 uv run python -m app.calendar_helper
 
@@ -30,9 +22,15 @@ uv run python -m app.calendar_helper
 uv run python -m app.calendar_helper --date 2026-03-20
 ```
 
+Do NOT attempt to curl, wget, or fetch calendar data any other way. The helper handles
+authentication, timezone conversion, and formatting. Raw calendar data is in mixed timezones
+and will give you wrong times.
+
 ## Output Format
 
-The helper outputs JSON to stdout — an array of event objects sorted by time (all-day events first):
+The helper outputs JSON to stdout — an array of event objects sorted by time (all-day events first).
+**The start and end times are already converted to the user's local timezone (Pacific Time).**
+Read them as-is — do not convert or adjust them.
 
 ```json
 [
@@ -45,13 +43,23 @@ The helper outputs JSON to stdout — an array of event objects sorted by time (
   },
   {
     "subject": "Team Standup",
-    "start": "2026-03-19T09:00:00",
-    "end": "2026-03-19T09:30:00",
+    "start": "9 AM",
+    "end": "9:30 AM",
     "location": "Zoom",
+    "is_all_day": false
+  },
+  {
+    "subject": "Product Leadership",
+    "start": "1 PM",
+    "end": "2 PM",
+    "location": "Microsoft Teams Meeting",
     "is_all_day": false
   }
 ]
 ```
+
+**Read the "start" field literally.** If it says "1 PM", tell the user "1 PM". If it says "10:30 AM",
+tell the user "10:30 AM". Do not reinterpret, convert, or adjust the times in any way.
 
 Errors go to stderr with exit code 1.
 
@@ -70,8 +78,8 @@ Errors go to stderr with exit code 1.
 ### "Any meetings this afternoon?"
 
 1. Run the helper for today
-2. Filter events with start time after 12:00
-3. Report only afternoon events
+2. Filter events where start contains "PM"
+3. Report only those events
 
 ### Status Briefing Integration
 
@@ -82,8 +90,8 @@ When giving a status briefing, lead with the calendar:
 
 ## Voice Formatting
 
-- Lead with the next upcoming event: "Next up: Team Standup at 9."
-- Use natural times: "9", "2:30", "noon" — not "09:00:00"
+- Lead with the next upcoming event: "Next up: Team Standup at 9 AM."
+- Read times exactly as shown in the JSON — they are already in the user's timezone
 - Group back-to-back meetings: "Back-to-back from 10 to noon: Design Review then Sprint Planning."
 - All-day events first: "All day: Company Holiday. Plus 3 meetings."
 - Keep total spoken output under 15 seconds
