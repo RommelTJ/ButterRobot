@@ -115,12 +115,6 @@ Office365/Outlook calendar integration via a published ICS feed. No OAuth, no Az
 
 See `deploy/calendar-helper.env.example`.
 
-## Manager CLI (Planned)
-
-Natural language interface to the Typer-based manager CLI on the MacBook — team reports, 1-1 prep, code stats, vacations, goals.
-
-**Status**: Blocked by [openclaw#37591](https://github.com/openclaw/openclaw/issues/37591) — the macOS companion app does not support `system.run` yet. The skill was built and tested but removed until the fix ships. See git history at `924575d` to restore it.
-
 ## Running locally
 
 ```bash
