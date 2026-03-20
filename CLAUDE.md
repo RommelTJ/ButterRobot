@@ -9,11 +9,10 @@ ButterRobot is "Jarvis" — a voice-driven AI engineering copilot built for hand
 2. PiAware aircraft tracking ("anything interesting flying overhead?")
 3. Voice-driven GitLab MR review and comment posting
 4. Manager CLI integration (team reports, vacations) — **blocked**, see Known Limitations
-5. macOS control — IntelliJ, terminal, git ops via MacBook node — **blocked**, see Known Limitations
 
 ## Architecture
 
-The miniPC is the gateway host. It owns all Claude API calls, skills, cron jobs, and API integrations. It runs 24/7 independent of the MacBook. The MacBook is a paired node that provides voice I/O (wake word, TTS playback) and local macOS execution via `node.invoke → system.run`.
+The miniPC is the gateway host. It owns all Claude API calls, skills, cron jobs, and API integrations. It runs 24/7 independent of the MacBook. The MacBook is a paired node that provides voice I/O (Talk Mode, TTS playback) and WebChat access.
 
 ## Technology Choices
 

@@ -18,9 +18,9 @@ A voice-driven AI engineering copilot powered by OpenClaw + Claude, built to run
 
 ## Architecture
 
-The homelab miniPC is the gateway host — it owns all Claude API calls, skills, cron jobs, and API integrations, 
-running 24/7. The MacBook Pro is a paired node that provides voice I/O (wake word detection, ElevenLabs TTS playback) 
-and local macOS execution via `node.invoke → system.run`.
+The homelab miniPC is the gateway host — it owns all Claude API calls, skills, cron jobs, and API integrations,
+running 24/7. The MacBook Pro is a paired node that provides voice I/O (Talk Mode, ElevenLabs TTS playback)
+and WebChat access.
 
 ```
 ┌───────────────────────┐          ┌─────────────────────────────────┐
@@ -30,8 +30,8 @@ and local macOS execution via `node.invoke → system.run`.
 │  • Mic / Speaker      │          │  • ButterRobot server (:8585)   │
 │  • Voice wake word    │          │  • OpenClaw Gateway (:18789)    │
 │  • ElevenLabs TTS     │          │  • Claude API (Anthropic)       │
-│  • macOS execution    │          │  • GitLab API                   │
-│    (IntelliJ, git)    │          │  • PiAware feed (LAN poll)      │
+│  • Talk Mode (voice)  │          │  • GitLab API                   │
+│  • WebChat dashboard  │          │  • PiAware feed (LAN poll)      │
 │                       │          │  • Calendar (ICS feed)          │
 └───────────────────────┘          └─────────────────────────────────┘
 ```

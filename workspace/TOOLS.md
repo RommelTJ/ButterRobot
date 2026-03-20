@@ -33,21 +33,13 @@ Skills define _how_ tools work. This file is for your specifics — the stuff th
 | PiAware polling             | miniPC  | exec tool (curl to dump1090)    |
 | Calendar queries            | miniPC  | exec tool (python helper)       |
 | Cron jobs                   | miniPC  | Gateway cron scheduler          |
-| IntelliJ focus / open files | MacBook | node.invoke → system.run        |
-| Local git operations        | MacBook | node.invoke → system.run        |
-| Run local test suites       | MacBook | node.invoke → system.run        |
 
 ## Known Limitations — macOS Node Exec
 
 The OpenClaw macOS companion app does **not** support `system.run` as of v2026.3.14
 ([openclaw/openclaw#37591](https://github.com/openclaw/openclaw/issues/37591)).
-The node advertises browser, canvas, and screen capabilities only. A PR is in progress
-but no release date. This blocks any skill that needs to run shell commands on the MacBook
-(e.g. manager CLI, git operations, IntelliJ control).
-
-**Workarounds considered and rejected:**
-- SSH from miniPC → MacBook: requires enabling Remote Login on macOS, undesirable
-- Cloning the manager repo to miniPC: SQLite DB is local to MacBook, sync is fragile
+The node advertises browser, canvas, and screen capabilities only. All skills must
+run on the miniPC via the exec tool. No shell commands can be routed to the MacBook.
 
 **When the fix ships:** re-add the manager skill from git history (commit `924575d`)
 and configure `tools.exec.host=node` + `tools.exec.node="Rommel's MacBook Pro"` in
