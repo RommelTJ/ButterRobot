@@ -38,16 +38,30 @@ Example voice output: "You have 4 meetings today. Next up: Team Standup at 9 AM.
 
 ### Step 2: Open GitLab MRs (always)
 
-Fetch open MRs:
+Fetch open MRs **per team member** — do NOT use `scope=all` (it times out scanning every visible project on gitlab.com). Run one query per person:
 
 ```bash
-curl -s -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
-  "$GITLAB_URL/api/v4/merge_requests?state=opened&scope=all&per_page=20"
+# Run all four in sequence — each is fast on its own
+curl -s --max-time 10 -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+  "$GITLAB_URL/api/v4/merge_requests?state=opened&author_username=rommel-rico&per_page=10"
+curl -s --max-time 10 -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+  "$GITLAB_URL/api/v4/merge_requests?state=opened&author_username=agallagher1&per_page=10"
+curl -s --max-time 10 -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+  "$GITLAB_URL/api/v4/merge_requests?state=opened&author_username=fcrear&per_page=10"
+curl -s --max-time 10 -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+  "$GITLAB_URL/api/v4/merge_requests?state=opened&author_username=mszeto&per_page=10"
+```
+
+Also check MRs where you are reviewer:
+
+```bash
+curl -s --max-time 10 -H "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+  "$GITLAB_URL/api/v4/merge_requests?state=opened&reviewer_username=rommel-rico&per_page=10"
 ```
 
 Summarize:
-- Total count of open MRs
-- Group by author (prioritize team members: Adam, Fele, Mitchell, Rommel)
+- Total count of open MRs across the team
+- Group by author
 - Flag anything blocked, with a failing pipeline, or waiting on review
 - If any MR has you as reviewer, mention it first
 
