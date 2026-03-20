@@ -26,11 +26,15 @@ def fetch_ics(url: str) -> Calendar:
 
 
 def _to_local(dt: datetime, local_tz: ZoneInfo) -> datetime:
-    """Convert a datetime to the local timezone."""
+    """Convert a datetime to the local timezone, returning a naive datetime.
+
+    The offset is stripped because the LLM misinterprets ISO 8601 offsets
+    (e.g. reading "12:00:00-07:00" as 1 PM instead of noon Pacific).
+    """
     if dt.tzinfo is None:
         # Naive datetime — assume UTC
         dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(local_tz)
+    return dt.astimezone(local_tz).replace(tzinfo=None)
 
 
 def fetch_events(
