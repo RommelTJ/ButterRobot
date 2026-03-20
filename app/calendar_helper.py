@@ -26,15 +26,18 @@ def fetch_ics(url: str) -> Calendar:
 
 
 def _to_local(dt: datetime, local_tz: ZoneInfo) -> datetime:
-    """Convert a datetime to the local timezone, returning a naive datetime.
-
-    The offset is stripped because the LLM misinterprets ISO 8601 offsets
-    (e.g. reading "12:00:00-07:00" as 1 PM instead of noon Pacific).
-    """
+    """Convert a datetime to the local timezone, returning a naive datetime."""
     if dt.tzinfo is None:
         # Naive datetime — assume UTC
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(local_tz).replace(tzinfo=None)
+
+
+def _format_time(dt: datetime | date) -> str:
+    """Format a datetime as human-readable 12-hour time, or ISO date for all-day."""
+    if not isinstance(dt, datetime):
+        return dt.isoformat()
+    return dt.strftime("%-I:%M %p").replace(":00 ", " ")
 
 
 def fetch_events(
@@ -66,7 +69,8 @@ def fetch_events(
 
     events = recurring_ical_events.of(cal).between(day_start, day_end)
 
-    result = []
+    # Collect events with raw datetimes for sorting
+    raw_events = []
     for event in events:
         dtstart = event.get("DTSTART")
         dtend = event.get("DTEND")
@@ -81,18 +85,22 @@ def fetch_events(
             if isinstance(end_val, datetime):
                 end_val = _to_local(end_val, local_tz)
 
+        raw_events.append((start_val, end_val, is_all_day, event))
+
+    # Sort: all-day first, then by start time
+    raw_events.sort(key=lambda e: (not e[2], e[0] if e[0] else date.min))
+
+    result = []
+    for start_val, end_val, is_all_day, event in raw_events:
         result.append(
             {
                 "subject": str(event.get("SUMMARY", "")),
-                "start": start_val.isoformat() if start_val else "",
-                "end": end_val.isoformat() if end_val else "",
+                "start": _format_time(start_val) if start_val else "",
+                "end": _format_time(end_val) if end_val else "",
                 "location": str(event.get("LOCATION", "")),
                 "is_all_day": is_all_day,
             }
         )
-
-    # Sort: all-day first, then by start time
-    result.sort(key=lambda e: (not e["is_all_day"], e["start"]))
 
     return result
 

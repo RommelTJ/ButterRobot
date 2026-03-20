@@ -44,8 +44,7 @@ class TestFetchEvents:
         assert len(result) == 1
         event = result[0]
         assert event["subject"] == "Team Standup"
-        assert "2026-03-19" in event["start"]
-        assert "2026-03-19" in event["end"]
+        assert "AM" in event["start"] or "PM" in event["start"]
         assert event["location"] == "Zoom"
         assert event["is_all_day"] is False
 
@@ -149,9 +148,9 @@ class TestFetchEvents:
         )
 
         assert len(result) == 1
-        # 1 PM Mountain = 12 PM Pacific, no offset in output
-        assert result[0]["start"] == "2026-03-20T12:00:00"
-        assert result[0]["end"] == "2026-03-20T14:30:00"
+        # 1 PM Mountain = 12 PM Pacific
+        assert result[0]["start"] == "12 PM"
+        assert result[0]["end"] == "2:30 PM"
 
     @patch("app.calendar_helper.fetch_ics")
     def test_respects_calendar_timezone_env(self, mock_fetch_ics):
@@ -171,8 +170,8 @@ class TestFetchEvents:
             )
 
         assert len(result) == 1
-        # 3 PM UTC = 11 AM EDT, no offset in output
-        assert result[0]["start"] == "2026-03-19T11:00:00"
+        # 3 PM UTC = 11 AM EDT
+        assert result[0]["start"] == "11 AM"
 
     @patch("app.calendar_helper.fetch_ics")
     def test_all_day_events_not_converted(self, mock_fetch_ics):
