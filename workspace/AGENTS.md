@@ -75,6 +75,8 @@ Keep the total spoken output under 30 seconds. If the user asks for detail, prov
 
 Lead with what needs attention. Skip items that are on track unless asked.
 
+For the full orchestration workflow, see `skills/briefing/SKILL.md`.
+
 ## Code review approach
 
 Focus on architectural concerns — code smells, structural flaws, missing abstractions. Do not flag nits or style
