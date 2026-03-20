@@ -1,6 +1,6 @@
 # ButterRobot
 
-**v0.6.0 — March 19, 2026**
+**v0.7.0 — March 19, 2026**
 
 > What is my purpose? To read your calendar, review your GitLab MRs, and tell you what's flying over your house.   
 > And to pass the butter.
@@ -15,13 +15,12 @@ A voice-driven AI engineering copilot powered by OpenClaw + Claude, built to run
 - **PiAware aircraft tracking** — "anything interesting flying overhead?"
 - **MR code review** — pulls diffs from GitLab, summarizes by voice
 - **Comment posting** — posts GitLab review comments by voice command
-- **Manager report** — runs the manager CLI, analyzes and speaks the output
 
 ## Architecture
 
-The homelab miniPC is the gateway host — it owns all Claude API calls, skills, cron jobs, and API integrations, 
-running 24/7. The MacBook Pro is a paired node that provides voice I/O (wake word detection, ElevenLabs TTS playback) 
-and local macOS execution via `node.invoke → system.run`.
+The homelab miniPC is the gateway host — it owns all Claude API calls, skills, cron jobs, and API integrations,
+running 24/7. The MacBook Pro is a paired node that provides voice I/O (Talk Mode, ElevenLabs TTS playback)
+and WebChat access.
 
 ```
 ┌───────────────────────┐          ┌─────────────────────────────────┐
@@ -31,9 +30,9 @@ and local macOS execution via `node.invoke → system.run`.
 │  • Mic / Speaker      │          │  • ButterRobot server (:8585)   │
 │  • Voice wake word    │          │  • OpenClaw Gateway (:18789)    │
 │  • ElevenLabs TTS     │          │  • Claude API (Anthropic)       │
-│  • macOS execution    │          │  • GitLab API                   │
-│    (IntelliJ, git,    │          │  • PiAware feed (LAN poll)      │
-│     manager CLI)      │          │  • Calendar API                 │
+│  • Talk Mode (voice)  │          │  • GitLab API                   │
+│  • WebChat dashboard  │          │  • PiAware feed (LAN poll)      │
+│                       │          │  • Calendar (ICS feed)          │
 └───────────────────────┘          └─────────────────────────────────┘
 ```
 
@@ -69,19 +68,19 @@ The poller runs on the host (not Docker) because it needs `pw-play` access to th
 
 All configured in `~/.config/butterrobot/piaware-poller.env` on the miniPC. See `deploy/piaware-poller.env.example`.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PIAWARE_HOME_LAT` | (required) | Home latitude |
-| `PIAWARE_HOME_LON` | (required) | Home longitude |
-| `ELEVENLABS_API_KEY` | (required) | ElevenLabs API key for TTS |
-| `PIAWARE_AUDIO_SINK` | (required) | PipeWire AirPlay sink name |
-| `ELEVENLABS_VOICE_ID` | `weA4Q36twV5kwSaTEL0Q` | ElevenLabs voice (Callum) |
-| `PIAWARE_URL_1090` | `http://piaware.homelab.com:8080/data/aircraft.json` | dump1090-fa endpoint |
-| `PIAWARE_URL_978` | `http://piaware.homelab.com:80/data/aircraft.json` | skyaware978 UAT endpoint |
-| `PIAWARE_RADIUS_NM` | `2` | Alert radius in nautical miles |
-| `PIAWARE_ALTITUDE_MAX` | `5000` | Max altitude in feet to consider |
-| `PIAWARE_POLL_INTERVAL` | `30` | Seconds between polls |
-| `PIAWARE_STATE_DIR` | `workspace/state` | State directory for focus/dedup files |
+| Variable                | Default                                              | Description                           |
+|-------------------------|------------------------------------------------------|---------------------------------------|
+| `PIAWARE_HOME_LAT`      | (required)                                           | Home latitude                         |
+| `PIAWARE_HOME_LON`      | (required)                                           | Home longitude                        |
+| `ELEVENLABS_API_KEY`    | (required)                                           | ElevenLabs API key for TTS            |
+| `PIAWARE_AUDIO_SINK`    | (required)                                           | PipeWire AirPlay sink name            |
+| `ELEVENLABS_VOICE_ID`   | `weA4Q36twV5kwSaTEL0Q`                               | ElevenLabs voice (Callum)             |
+| `PIAWARE_URL_1090`      | `http://piaware.homelab.com:8080/data/aircraft.json` | dump1090-fa endpoint                  |
+| `PIAWARE_URL_978`       | `http://piaware.homelab.com:80/data/aircraft.json`   | skyaware978 UAT endpoint              |
+| `PIAWARE_RADIUS_NM`     | `2`                                                  | Alert radius in nautical miles        |
+| `PIAWARE_ALTITUDE_MAX`  | `5000`                                               | Max altitude in feet to consider      |
+| `PIAWARE_POLL_INTERVAL` | `30`                                                 | Seconds between polls                 |
+| `PIAWARE_STATE_DIR`     | `workspace/state`                                    | State directory for focus/dedup files |
 
 ### Deployment
 
@@ -99,6 +98,21 @@ journalctl --user -u piaware-poller.service -f
 ### Focus Mode
 
 Toggle via voice ("focus mode on" / "focus mode off") to silence proactive alerts. On-demand queries always work regardless.
+
+## Calendar Integration
+
+Office365/Outlook calendar integration via a published ICS feed. No OAuth, no Azure app registration — just a URL. Fetches events for status briefings and on-demand queries ("What's on my calendar?", "Anything tomorrow?").
+
+**Skill** (`workspace/skills/calendar/SKILL.md`): Teaches the OpenClaw agent to invoke the helper and summarize events concisely for voice.
+
+**Helper** (`app/calendar_helper.py`): Fetches the ICS feed, filters by date, handles recurring events, outputs JSON to stdout.
+
+### Setup
+
+1. Outlook web → Settings → Calendar → Shared calendars → Publish a calendar → copy the ICS link
+2. Set `CALENDAR_ICS_URL` in the gateway systemd environment on the miniPC
+
+See `deploy/calendar-helper.env.example`.
 
 ## Running locally
 

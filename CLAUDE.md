@@ -8,30 +8,29 @@ ButterRobot is "Jarvis" — a voice-driven AI engineering copilot built for hand
 1. Status briefing — calendar + open GitLab MRs
 2. PiAware aircraft tracking ("anything interesting flying overhead?")
 3. Voice-driven GitLab MR review and comment posting
-4. Manager CLI integration (team reports, vacations)
-5. macOS control — IntelliJ, terminal, git ops via MacBook node
+4. Manager CLI integration (team reports, vacations) — **blocked**, see Known Limitations
 
 ## Architecture
 
-The miniPC is the gateway host. It owns all Claude API calls, skills, cron jobs, and API integrations. It runs 24/7 independent of the MacBook. The MacBook is a paired node that provides voice I/O (wake word, TTS playback) and local macOS execution via `node.invoke → system.run`.
+The miniPC is the gateway host. It owns all Claude API calls, skills, cron jobs, and API integrations. It runs 24/7 independent of the MacBook. The MacBook is a paired node that provides voice I/O (Talk Mode, TTS playback) and WebChat access.
 
 ## Technology Choices
 
 This is a uv-managed Python project.
 
-| Tool | Purpose |
-|------|---------|
-| **FastAPI** | Web framework for the ButterRobot server |
-| **uvicorn** | ASGI server (invoked directly for SSL support) |
-| **websockets** | WebSocket proxy to OpenClaw Gateway |
-| **OpenClaw** | AI agent runtime (Gateway on miniPC at `:18789`) |
-| **Pydantic** | Data validation and serialization |
-| **uv** | Package and project management (`pyproject.toml`) |
-| **pytest** + **pytest-cov** | Testing and coverage |
-| **ruff** | Linting and formatting |
-| **ty** | Static type checking (Astral) |
-| **Docker + docker-compose** | Container build and deployment, port 8585 (HTTPS) |
-| **mkcert** | Local TLS cert for HTTPS on LAN (cert at `~/.certs/` on miniPC) |
+| Tool                        | Purpose                                                         |
+|-----------------------------|-----------------------------------------------------------------|
+| **FastAPI**                 | Web framework for the ButterRobot server                        |
+| **uvicorn**                 | ASGI server (invoked directly for SSL support)                  |
+| **websockets**              | WebSocket proxy to OpenClaw Gateway                             |
+| **OpenClaw**                | AI agent runtime (Gateway on miniPC at `:18789`)                |
+| **Pydantic**                | Data validation and serialization                               |
+| **uv**                      | Package and project management (`pyproject.toml`)               |
+| **pytest** + **pytest-cov** | Testing and coverage                                            |
+| **ruff**                    | Linting and formatting                                          |
+| **ty**                      | Static type checking (Astral)                                   |
+| **Docker + docker-compose** | Container build and deployment, port 8585 (HTTPS)               |
+| **mkcert**                  | Local TLS cert for HTTPS on LAN (cert at `~/.certs/` on miniPC) |
 
 ## Common Commands
 
@@ -119,6 +118,15 @@ Skills are **Markdown files, not code**. They teach the OpenClaw agent what exec
 - `openclaw skills list` checks the CLI's shell env, not the gateway's. A skill may show `✗ missing` in the CLI but work fine at runtime. Verify with: `cat /proc/$(systemctl --user show openclaw-gateway.service -p MainPID --value)/environ | tr '\0' '\n' | grep <VAR>`
 - Project IDs and team members live in the gitlab skill as a reference — update them there when the team changes
 - Credentials from Rommel's git remotes on the MacBook (under `~/code/work/chatmeter/`) can be used to find API tokens
+
+### Lessons Learned (Skills Development)
+
+- **Gateway exec uses `/bin/bash` without login profile** — `~/.local/bin` is not on PATH. Always use absolute paths in skills (e.g. `/home/rommel/.local/bin/uv` instead of `uv`).
+- **`~` resolves to the miniPC home dir** even for commands intended for the MacBook node. Use absolute macOS paths (`/Users/rommel/...`) in node-targeted skills.
+- **LLMs misread ISO 8601 times** — `12:00:00-07:00` was interpreted as 1 PM. Use human-readable formats (`12 PM`, `10:30 AM`) in tool output for the agent.
+- **ICS feeds have mixed timezones** — events from different organizers come in their local timezone. Always convert to the user's timezone before outputting.
+- **Azure AD may block self-service app registration** — O365 OAuth2 requires an Azure app. If the tenant blocks it, use published ICS URLs instead (Outlook web → Shared calendars → Publish).
+- **OpenClaw macOS node does not support `system.run`** as of v2026.3.14 ([openclaw#37591](https://github.com/openclaw/openclaw/issues/37591)). Any skill that needs to run shell commands on the MacBook is blocked until this is fixed. The node only supports browser, canvas, and screen capabilities.
 
 ### PiAware (Raspberry Pi, 192.168.0.211)
 - Hostname: `piaware.homelab.com` (add to `/etc/hosts`: `192.168.0.211 piaware.homelab.com`)
