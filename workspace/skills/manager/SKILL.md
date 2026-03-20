@@ -14,7 +14,7 @@ read-only. The CLI runs on the MacBook via `node.invoke → system.run`.
 All commands run on the MacBook. Use `node.invoke → system.run` with this pattern:
 
 ```
-cd /Users/rommel/code/work/chatmeter/manager && uv run python manager_cli.py <command>
+python /Users/rommel/code/work/chatmeter/manager/manager_cli.py <command>
 ```
 
 The MacBook must be connected to the gateway. If the node is unreachable, tell the user: "Can't reach the MacBook
