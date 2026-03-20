@@ -15,7 +15,6 @@ A voice-driven AI engineering copilot powered by OpenClaw + Claude, built to run
 - **PiAware aircraft tracking** — "anything interesting flying overhead?"
 - **MR code review** — pulls diffs from GitLab, summarizes by voice
 - **Comment posting** — posts GitLab review comments by voice command
-- **Manager report** — runs the manager CLI, analyzes and speaks the output
 
 ## Architecture
 
@@ -32,8 +31,8 @@ and local macOS execution via `node.invoke → system.run`.
 │  • Voice wake word    │          │  • OpenClaw Gateway (:18789)    │
 │  • ElevenLabs TTS     │          │  • Claude API (Anthropic)       │
 │  • macOS execution    │          │  • GitLab API                   │
-│    (IntelliJ, git,    │          │  • PiAware feed (LAN poll)      │
-│     manager CLI)      │          │  • Calendar API                 │
+│    (IntelliJ, git)    │          │  • PiAware feed (LAN poll)      │
+│                       │          │  • Calendar (ICS feed)          │
 └───────────────────────┘          └─────────────────────────────────┘
 ```
 
