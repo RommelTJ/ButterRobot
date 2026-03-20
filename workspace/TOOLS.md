@@ -17,6 +17,13 @@ Skills define _how_ tools work. This file is for your specifics — the stuff th
 - Proactive alerts: Python poller script filters locally, invokes agent only for interesting aircraft
 - Focus mode: `workspace/state/piaware-focus.json` — toggle via voice ("focus mode on/off")
 
+## Briefing
+
+- Skill: see `skills/briefing/SKILL.md` for the status briefing meta-skill
+- Orchestrates calendar, GitLab MRs, and PiAware into a single spoken update
+- Trigger phrases: "status update", "brief me", "how are things?"
+- Total spoken output target: under 30 seconds
+
 ## Calendar
 
 - Skill: see `skills/calendar/SKILL.md` for calendar event queries
