@@ -115,13 +115,11 @@ Office365/Outlook calendar integration via a published ICS feed. No OAuth, no Az
 
 See `deploy/calendar-helper.env.example`.
 
-## Manager CLI
+## Manager CLI (Planned)
 
-Natural language interface to the Typer-based manager CLI on the MacBook. Ask about team reports, 1-1 prep, code stats, vacations, and goals — the agent maps natural language to CLI commands.
+Natural language interface to the Typer-based manager CLI on the MacBook — team reports, 1-1 prep, code stats, vacations, goals.
 
-**Skill** (`workspace/skills/manager/SKILL.md`): Teaches the OpenClaw agent to map queries like "how's Mitchell doing?" to `manager prep Mitchell` and summarize the output for voice.
-
-All commands are read-only and run on the MacBook via `node.invoke → system.run`. The MacBook must be connected to the gateway.
+**Status**: Blocked by [openclaw#37591](https://github.com/openclaw/openclaw/issues/37591) — the macOS companion app does not support `system.run` yet. The skill was built and tested but removed until the fix ships. See git history at `924575d` to restore it.
 
 ## Running locally
 
