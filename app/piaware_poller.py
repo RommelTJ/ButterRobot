@@ -333,10 +333,13 @@ class PiawarePoller:
         self, text: str, api_key: str, voice_id: str
     ) -> bytes | None:
         """Call ElevenLabs TTS API and return audio bytes."""
+        model_id = os.environ.get(
+            "ELEVENLABS_MODEL_ID", "eleven_multilingual_v2"
+        )
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
         payload = json.dumps({
             "text": text,
-            "model_id": "eleven_multilingual_v2",
+            "model_id": model_id,
             "voice_settings": {
                 "stability": 0.5,
                 "similarity_boost": 0.75,
