@@ -16,10 +16,10 @@ Query calendar events for status briefings and on-demand calendar questions.
 # Run from /home/rommel/ButterRobot on the miniPC via exec tool
 
 # Today's events
-uv run python -m app.calendar_helper
+/home/rommel/.local/bin/uv run python -m app.calendar_helper
 
 # Specific date
-uv run python -m app.calendar_helper --date 2026-03-20
+/home/rommel/.local/bin/uv run python -m app.calendar_helper --date 2026-03-20
 ```
 
 Do NOT attempt to curl, wget, or fetch calendar data any other way. The helper handles
